@@ -1,0 +1,7 @@
+graph G {
+u -- w; /* a comment */
+w -- r; /* an edge between w and r */
+w -- s;
+s -- u;
+t; /* a node that doesn’t have any incoming or outgoing edges */
+}

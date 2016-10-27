@@ -1,0 +1,8 @@
+graph g {
+	a--b; /* first comment */
+	a--c;
+	b--d;
+	c--d; /* second comment*/
+	c--e;
+	d--e;
+}
