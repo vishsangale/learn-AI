@@ -13,3 +13,12 @@ t;       /* a node that doesn't have any incoming or outgoing edges */
 }
 ```
 
+## 2. The Huarong Pass Puzzle ##
+A program that uses uninformed search to solve the Huarong Pass Puzzle. It is a sliding block puzzle where the tiles are initially arranged as shown in the picture below. The objective is to move the top center piece, representing the Chinese general
+Cao Cao to the opening at the bottom. 
+
+<p align="center">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/HuaRongDao.jpg/220px-HuaRongDao.jpg" alt="Huarong Pass"/>
+</p>
+
+Different search strategies like BFS, DFS, BID(Bidirectional search) are studied and the performance of these strategies are compared on the problem. Search strategies from [AIMA](http://aima.cs.berkeley.edu/) are used for implementation purposes.
