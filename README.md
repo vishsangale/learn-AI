@@ -51,3 +51,13 @@ Following solution strategies are compared,
 
 * Simulated annealing.
 
+## 4. Constraint satisfaction problems ##
+The problem of placing _k_ black and _k_ white knights on an _nxn_
+chess board such that no two knights of the same color are attacking 
+each other is formulated as a constraint satisfaction problem with
+binary inequality constraints. Problem is solved using backtracking 
+search with the various heuristics. AC3 algorithm is not able to solve 
+constraint satisfaction problems, but it does some progress towards the
+solution so it is used along with backtracking search to solve the 
+CSP problem with more time efficiency.
+
