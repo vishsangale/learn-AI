@@ -1,7 +1,13 @@
 # learn-AI - Artificial Intelligence Projects
 
 ## 1. The Maximum Clique Problem ##
-A program that computes the size of the maximum clique in a graph. Clique is a fully connected sub-graph, the problem of finding the maximum clique is NP-complete, i.e. there exists no polynomial time algorithm for solving it. A simple Brute-Force approach is employed to find all the sub-graphs in the graph. A program needs to be able to read an undirected graph from a file. The file format it should recognize is a simplified version of the dot format.
+A program that computes the size of the maximum clique in a graph. 
+Clique is a fully connected sub-graph, the problem of finding the 
+maximum clique is NP-complete, i.e. there exists no polynomial time 
+algorithm for solving it. A simple Brute-Force approach is employed to 
+find all the sub-graphs in the graph. A program needs to be able to read
+an undirected graph from a file. The file format it should recognize is
+a simplified version of the dot format.
 Here's an example:
 ```dot
 graph G {
@@ -21,8 +27,7 @@ piece, representing the Chinese general Cao Cao to the opening at the
 bottom.
 
 <p align="center">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/
-HuaRongDao.jpg/220px-HuaRongDao.jpg" alt="Huarong Pass"/>
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/HuaRongDao.jpg/220px-HuaRongDao.jpg" alt="Huarong Pass"/>
 </p>
 
 Different search strategies like BFS, DFS, BID(Bidirectional search)
