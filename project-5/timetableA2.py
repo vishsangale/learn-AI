@@ -1,11 +1,11 @@
 # Tabu search algorithm for solving exam time-tabling problem
+import cProfile
 import time
 import sys
 import random
 import math
 from collections import deque
 import copy
-
 
 MAX_TIME_SLOTS_PER_DAY = 5
 
@@ -14,35 +14,32 @@ NUMBER_OF_TIME_SLOTS = 0
 TOTAL_STUDENT_COST = 1
 
 
-# Class which represents the search problem
 class TabuSearch:
-    def __init__(self, courseFile, studentFile, outputFile, objective):
-        self.objective = objective  # argument for objective functions
+    def __init__(self, course_file, student_file, output_file, objective):
+        self.objective = objective
         self.roomCapacity = 0
         self.maxTimeSlots = 0
         self.courses = {}
         self.students = {}
-        self.read_course_file(courseFile)
-        self.readStudentFile(studentFile)
-        self.outputFile = outputFile
+        self.read_course_file(course_file)
+        self.read_student_file(student_file)
+        self.outputFile = output_file
         self.solution = []
         self.slots = []
 
-    # Read course file
-    def read_course_file(self, courseFile):
-        cf = open(courseFile, "r")
-        firstLine = cf.readline().split()
-        self.roomCapacity = int(firstLine[0])
-        self.maxTimeSlots = int(firstLine[1])
+    def read_course_file(self, course_file):
+        cf = open(course_file, "r")
+        first_line = cf.readline().split()
+        self.roomCapacity = int(first_line[0])
+        self.maxTimeSlots = int(first_line[1])
         while True:
             line = cf.readline().split()
             if not line:
                 break
             self.courses[line[0]] = int(line[1])
 
-    # Read student file
-    def readStudentFile(self, studentFile):
-        sf = open(studentFile, "r")
+    def read_student_file(self, student_file):
+        sf = open(student_file, "r")
         # Student number starts from 1 not from 0.
         count = 1
         while True:
@@ -52,8 +49,7 @@ class TabuSearch:
             self.students[count] = line
             count += 1
 
-    # Write solution to the output file.
-    def writeOutputFile(self):
+    def write_output_file(self):
         output = self.generate_solution(self.slots)
         f = open(self.outputFile, "w")
         data = str(len(self.slots)) + '\t' + str(self.calculate_objective_function_cost(self.slots)) + '\n'
@@ -64,8 +60,7 @@ class TabuSearch:
         f.close()
         self.solution = output
 
-    # Generate initial solution randomly.
-    def generateRandomInitialSolution(self):
+    def generate_random_initial_solution(self):
         keys = self.courses.keys()
         while True:
             slots = []
@@ -74,81 +69,74 @@ class TabuSearch:
                 pick = random.randint(0, len(keys) - 1)
                 slot.append(keys[pick])
                 keys.remove(keys[pick])
-                slotSum = sum([self.courses[x] for x in slot])
-                if self.roomCapacity - slotSum > 0:
+                slot_sum = sum([self.courses[x] for x in slot])
+                if self.roomCapacity - slot_sum > 0:
                     for k in keys:
-                        if self.roomCapacity - slotSum - self.courses[k] >= 0:
+                        if self.roomCapacity - slot_sum - self.courses[k] >= 0:
                             slot.append(k)
                             keys.remove(k)
-                            slotSum += self.courses[k]
+                            slot_sum += self.courses[k]
                 slots.append(slot)
             if len(slots) <= self.maxTimeSlots:
                 self.slots = slots
                 return slots
 
-    # Generate neighbor just by swapping time slots
-    def generate_neighbor(self, slots, tabuList):
+    def generate_neighbor(self, slots, tabu_list):
         while True:
-            tempSlots = copy.deepcopy(slots)
-            lengthOfSlots = len(slots)
-            slot1 = random.randint(0, lengthOfSlots - 1)
-            while True:
-                slot2 = random.randint(0, lengthOfSlots - 1)
-                if slot2 != slot1:
-                    break
-            slot1Value = random.randint(0, len(tempSlots[slot1]) - 1)
-            slot2Value = random.randint(0, len(tempSlots[slot2]) - 1)
-            tempSlots[slot1][slot1Value], tempSlots[slot2][slot2Value] = tempSlots[slot2][slot2Value], tempSlots[slot1][
-                slot1Value]
-            if self.is_given_slot_feasible(tempSlots) and tempSlots not in tabuList:
-                return tempSlots
+            temp_slots = copy.deepcopy(slots)
+            length_of_slots = len(slots)
+            slot1 = random.randint(0, length_of_slots - 1)
+            slot2 = random.randint(0, length_of_slots - 1)
+            while slot2 == slot1:
+                slot2 = random.randint(0, length_of_slots - 1)
+            slot1_value = random.randint(0, len(temp_slots[slot1]) - 1)
+            slot2_value = random.randint(0, len(temp_slots[slot2]) - 1)
+            temp_slots[slot1][slot1_value], temp_slots[slot2][slot2_value] = temp_slots[slot2][slot2_value], \
+                                                                             temp_slots[slot1][slot1_value]
+            if self.is_given_slot_feasible(temp_slots) and temp_slots not in tabu_list:
+                return temp_slots
 
-    # Check if assigned slots are feasible
     def is_given_slot_feasible(self, slots):
         for slot in slots:
             for student in self.students:
-                if len(slot) == 1:
-                    continue
                 if all(x in self.students[student] for x in slot):
                     return False
         return True
 
-    # Calculate the objective function cost.
     def calculate_objective_function_cost(self, slots):
-        totalCost = 0
+        total_cost = 0
         solution = self.generate_solution(slots)
-        solutionMap = {}
+        solution_map = {}
         for s in solution:
-            solutionMap[s[0]] = s
+            solution_map[s[0]] = s
         for student in self.students:
-            consecutivePenalty = 0
-            overnightPenalty = 0
-            studentCourseMapping = {}
+            consecutive_penalty = 0
+            overnight_penalty = 0
+            student_course_mapping = {}
             for course in self.students[student]:
-                date = solutionMap[course][1]
-                if date in studentCourseMapping:
-                    studentCourseMapping[date].append(solutionMap[course])
+                date = solution_map[course][1]
+                if date in student_course_mapping:
+                    student_course_mapping[date].append(solution_map[course])
                 else:
-                    studentCourseMapping[date] = []
-                    studentCourseMapping[date].append(solutionMap[course])
-            for course in studentCourseMapping:
-                if len(studentCourseMapping[course]) != 1:
-                    consecutivePenalty += sum(
-                        [math.pow(2, -abs(x[2] - y[2])) for x in studentCourseMapping[course] for y in
-                         studentCourseMapping[course]
+                    student_course_mapping[date] = []
+                    student_course_mapping[date].append(solution_map[course])
+            for course in student_course_mapping:
+                if len(student_course_mapping[course]) != 1:
+                    consecutive_penalty += sum(
+                        [math.pow(2, -abs(x[2] - y[2])) for x in student_course_mapping[course] for y in
+                         student_course_mapping[course]
                          if x[0] != y[0] and x[1] == y[1]])
-            for course1 in studentCourseMapping:
-                for course2 in studentCourseMapping:
+            for course1 in student_course_mapping:
+                for course2 in student_course_mapping:
                     if course1 == course2:
                         continue
-                    overnightPenalty += sum(
-                        [math.pow(2, -abs(x[1] - y[1])) for x in studentCourseMapping[course1] for y in
-                         studentCourseMapping[course2]
+                    overnight_penalty += sum(
+                        [math.pow(2, -abs(x[1] - y[1])) for x in student_course_mapping[course1] for y in
+                         student_course_mapping[course2]
                          if x[0] != y[0] and x[1] != y[1]])
-            totalCost += consecutivePenalty * 10 + overnightPenalty
-        return totalCost
+            total_cost += consecutive_penalty * 10 + overnight_penalty
+        return total_cost
 
-    # Generate solution i.e assign each course with date and time slot.
     @staticmethod
     def generate_solution(courses):
         output = []
@@ -163,47 +151,51 @@ class TabuSearch:
             slot += 1
         return output
 
-    # Tabu search algorithm.
-    def search_algorithm(self, max_iterations, max_candidates, maxTabuListSize):
-        initialSolution = self.generateRandomInitialSolution()
-        mov = len(initialSolution[0]) / 2
+    def search_algorithm(self, max_iterations, max_candidates, max_tabu_list_size):
+        initial_solution = self.generate_random_initial_solution()
+        mov = len(initial_solution[0]) / 2
         if self.objective == '1':
-            for i in range(len(initialSolution)):
-                if len(initialSolution[i]) <= mov:
+            for i in range(len(initial_solution)):
+                if len(initial_solution[i]) <= mov:
                     continue
                 for j in range(mov):
-                    tail = initialSolution[i].pop()
-                    initialSolution.append([tail])
+                    tail = initial_solution[i].pop()
+                    initial_solution.append([tail])
         elif self.objective == '0':
             pass
-        best = initialSolution
-        tabuList = deque()
+        best = initial_solution
+        tabu_list = deque()
         while max_iterations > 0:
             candidates = []
             for i in range(max_candidates):
-                candidates.append(self.generate_neighbor(best, tabuList))
-            bestCandidate = min(candidates, key=self.calculate_objective_function_cost)
-            if self.calculate_objective_function_cost(bestCandidate) < self.calculate_objective_function_cost(best):
-                best = bestCandidate
-                if len(tabuList) < maxTabuListSize:
-                    tabuList.append(bestCandidate)
+                candidates.append(self.generate_neighbor(best, tabu_list))
+            best_candidate = min(candidates, key=self.calculate_objective_function_cost)
+            if self.calculate_objective_function_cost(best_candidate) < self.calculate_objective_function_cost(best):
+                best = best_candidate
+                if len(tabu_list) < max_tabu_list_size:
+                    tabu_list.append(best_candidate)
                 else:
-                    tabuList.popleft()
-                    tabuList.append(bestCandidate)
+                    tabu_list.popleft()
+                    tabu_list.append(best_candidate)
             max_iterations -= 1
         self.slots = best
         return best
 
 
-if __name__ == "__main__":
+def main():
+    random.seed(0)
     t0 = time.time()
-    # Create the class object and pass the arguments.
-    tabuInstance = TabuSearch(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
-    # Run the search algorithm on the given problem instance.
-    solution = tabuInstance.search_algorithm(1000, len(tabuInstance.students), len(tabuInstance.courses))
-    # Write the solution to the file
-    tabuInstance.writeOutputFile()
-    # Print solution
-    print tabuInstance.solution
-    print tabuInstance.calculate_objective_function_cost(solution)
+
+    tabu_instance = TabuSearch(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+
+    sol = tabu_instance.search_algorithm(2000, len(tabu_instance.students), len(tabu_instance.courses))
+
+    tabu_instance.write_output_file()
+
+    print tabu_instance.solution
+    print tabu_instance.calculate_objective_function_cost(sol)
     print time.time() - t0
+
+
+if __name__ == "__main__":
+    cProfile.run('main()')
