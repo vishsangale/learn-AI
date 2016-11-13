@@ -82,7 +82,8 @@ class TabuSearch:
                 return slots
 
     def generate_neighbor(self, slots, tabu_list):
-        while True:
+        count = 0
+        while True and count < 100:
             temp_slots = copy.deepcopy(slots)
             length_of_slots = len(slots)
             slot1 = random.randint(0, length_of_slots - 1)
@@ -93,8 +94,11 @@ class TabuSearch:
             slot2_value = random.randint(0, len(temp_slots[slot2]) - 1)
             temp_slots[slot1][slot1_value], temp_slots[slot2][slot2_value] = temp_slots[slot2][slot2_value], \
                                                                              temp_slots[slot1][slot1_value]
-            if self.is_given_slot_feasible(temp_slots) and temp_slots not in tabu_list:
+            if temp_slots not in tabu_list and self.is_given_slot_feasible(temp_slots):
                 return temp_slots
+            count += 1
+        if count == 100:
+            return self.generate_random_initial_solution()
 
     def is_given_slot_feasible(self, slots):
         for slot in slots:
@@ -106,20 +110,16 @@ class TabuSearch:
     def calculate_objective_function_cost(self, slots):
         total_cost = 0
         solution = self.generate_solution(slots)
-        solution_map = {}
-        for s in solution:
-            solution_map[s[0]] = s
+        solution_map = {s[0]: s for s in solution}
         for student in self.students:
             consecutive_penalty = 0
             overnight_penalty = 0
             student_course_mapping = {}
             for course in self.students[student]:
                 date = solution_map[course][1]
-                if date in student_course_mapping:
-                    student_course_mapping[date].append(solution_map[course])
-                else:
+                if date not in student_course_mapping:
                     student_course_mapping[date] = []
-                    student_course_mapping[date].append(solution_map[course])
+                student_course_mapping[date].append(solution_map[course])
             for course in student_course_mapping:
                 if len(student_course_mapping[course]) != 1:
                     consecutive_penalty += sum(
@@ -153,47 +153,43 @@ class TabuSearch:
 
     def search_algorithm(self, max_iterations, max_candidates, max_tabu_list_size):
         initial_solution = self.generate_random_initial_solution()
-        mov = len(initial_solution[0]) / 2
-        if self.objective == '1':
-            for i in range(len(initial_solution)):
-                if len(initial_solution[i]) <= mov:
-                    continue
-                for j in range(mov):
-                    tail = initial_solution[i].pop()
-                    initial_solution.append([tail])
-        elif self.objective == '0':
-            pass
         best = initial_solution
+        best_cost = self.calculate_objective_function_cost(best)
         tabu_list = deque()
+        costs = []
+        slots = best
         while max_iterations > 0:
-            candidates = []
-            for i in range(max_candidates):
-                candidates.append(self.generate_neighbor(best, tabu_list))
+            candidates = [self.generate_neighbor(slots, tabu_list) for _ in range(max_candidates)]
             best_candidate = min(candidates, key=self.calculate_objective_function_cost)
-            if self.calculate_objective_function_cost(best_candidate) < self.calculate_objective_function_cost(best):
+            best_candidate_cost = self.calculate_objective_function_cost(best_candidate)
+            print best_candidate_cost
+            if best_cost > best_candidate_cost:
                 best = best_candidate
-                if len(tabu_list) < max_tabu_list_size:
-                    tabu_list.append(best_candidate)
-                else:
+                best_cost = best_candidate_cost
+                if len(tabu_list) >= max_tabu_list_size:
                     tabu_list.popleft()
-                    tabu_list.append(best_candidate)
+                tabu_list.append(best_candidate)
             max_iterations -= 1
+            costs.append(best_candidate_cost)
+            if len(costs) >= 3 and costs[-1] == costs[-2] == costs[-3]:
+                slots = self.generate_random_initial_solution()
+        print costs
         self.slots = best
-        return best
+        return best_cost
 
 
 def main():
-    random.seed(0)
+    # random.seed(0)
     t0 = time.time()
 
     tabu_instance = TabuSearch(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
 
-    sol = tabu_instance.search_algorithm(2000, len(tabu_instance.students), len(tabu_instance.courses))
+    cost = tabu_instance.search_algorithm(100, 10, 10)
 
     tabu_instance.write_output_file()
 
     print tabu_instance.solution
-    print tabu_instance.calculate_objective_function_cost(sol)
+    print cost
     print time.time() - t0
 
 
